@@ -45,6 +45,7 @@ Java_com_alittlelost_ffmpegaudioloading_MainActivity_loadAsset(JNIEnv *env,
         __android_log_print(ANDROID_LOG_ERROR, "Main", "Failed to open asset %s", nativeFileName);
     } else {
         __android_log_print(ANDROID_LOG_INFO, "Main", "Successfully opened asset %s", nativeFileName);
+        AAsset_close(asset);
     }
 }
 
