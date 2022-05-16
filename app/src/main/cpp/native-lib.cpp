@@ -1,6 +1,10 @@
 #include <jni.h>
 #include <string>
-#include <android/log.h>
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <unistd.h>
 
 extern "C" {
 
@@ -8,46 +12,32 @@ extern "C" {
 #include <libavformat/avformat.h>
 #include <android/asset_manager_jni.h>
 #include <android/asset_manager.h>
+#include <android/log.h>
 
-AAssetManager *assetManager;
+
+constexpr char *FILES_DIR = "FILES_DIR_PATH";
+
+std::string readFile(std::string filePath) {
+    std::ifstream ifs(filePath);
+    std::stringstream ss;
+
+    ss << ifs.rdbuf();
+
+    return ss.str();
+}
 
 JNIEXPORT jstring JNICALL
 Java_com_alittlelost_ffmpegaudioloading_MainActivity_stringFromJNI(
         JNIEnv *env,
         jobject /* this */) {
 
+    std::string filesPath = getenv(FILES_DIR);
+
+    __android_log_print(ANDROID_LOG_INFO, "Main", "Loaded data: %s",
+                        readFile(filesPath + "/" + "metro.wav").c_str());
+
     std::string hello = avcodec_configuration();
     return env->NewStringUTF(hello.c_str());
 }
 
-JNIEXPORT jboolean JNICALL
-Java_com_alittlelost_ffmpegaudioloading_MainActivity_setAssetManager(JNIEnv *env,
-                                                                     jobject instance,
-                                                                     jobject jAssetManager) {
-    assetManager = AAssetManager_fromJava(env, jAssetManager);
-
-    if (assetManager == nullptr) {
-        __android_log_print(ANDROID_LOG_ERROR, "Main", "Failed to set assetManager");
-        return false;
-    }
-
-    return true;
 }
-
-JNIEXPORT void JNICALL
-Java_com_alittlelost_ffmpegaudioloading_MainActivity_loadAsset(JNIEnv *env,
-                                                               jobject instance,
-                                                               jstring assetName) {
-    const char* nativeFileName = env->GetStringUTFChars(assetName, nullptr);
-    AAsset *asset = AAssetManager_open(assetManager, nativeFileName, AASSET_MODE_UNKNOWN);
-
-    if(!asset) {
-        __android_log_print(ANDROID_LOG_ERROR, "Main", "Failed to open asset %s", nativeFileName);
-    } else {
-        __android_log_print(ANDROID_LOG_INFO, "Main", "Successfully opened asset %s", nativeFileName);
-        AAsset_close(asset);
-    }
-}
-
-}
-
